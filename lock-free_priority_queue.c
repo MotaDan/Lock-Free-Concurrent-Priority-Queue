@@ -160,6 +160,105 @@ bool Insert(int key, void* value)
 	return true;
 }
 
+void RemoveNode(struct Node *node, struct Node **prev, int level)
+{
+	// Local variables (for all functions/procedures)
+	struct Node *last;
+	
+	while(true)
+	{
+		union Link empty;
+		empty.p = NULL;
+		empty.d = true;
+		
+		if(node->next[level].p == empty.p && node->next[level].d == true)
+			break;
+		
+		last = ScanKey(prev, level, node->key);
+		RELEASE_NODE(last);
+		
+		if(last != node || (node->next[level].p == empty.p && node->next[level].d == true))
+			break;
+		
+		union Link prev_link = (*prev)->next[level];
+		union Link new_link;
+		new_link.p = node->next[level].p;
+		new_link.d = false;
+		if(__sync_bool_compare_and_swap((long long*)&(*prev)->next[level], (long long*)&prev_link, (long long*)&new_link))
+		{
+			node->next[level] = empty;
+			break;
+		}
+		
+		if(node->next[level].p == empty.p && node->next[level].d == empty.d)
+			break;
+		
+		//Back-Off
+	}
+}
+
+struct Node* DeleteMin()
+{
+	// Local variables (for all functions/procedures)
+	struct Node *newNode, *savedNodes[maxLevel];
+	struct Node *node1, *node2, *prev, *last;
+	int i;
+	
+	prev = COPY_NODE(head);
+	
+	while(true)
+	{
+		node1 = ReadNext(&prev,0);
+		if(node1 == tail)
+		{
+			RELEASE_NODE(prev);
+			RELEASE_NODE(node1);
+			return NULL;
+		}
+retry:
+		if(node1 != prev->next[0].p)
+		{
+			RELEASE_NODE(node1);
+			continue;
+		}
+		union VLink test_value= node1->value;
+		
+		if(test_value.d = false)
+		{
+			union VLink new_value;
+			new_value.p = test_value.p;
+			new_value.d = true;
+			if(__sync_bool_compare_and_swap((long long*)&node1->value, (long long*)&test_value, (long long*)&new_value))
+			{
+				node1->prev = prev;
+				break;
+			}
+			else
+				goto retry;
+		}
+		else if(test_value.d == true)
+			node1 = HelpDelete(node1, 0);
+		RELEASE_NODE(prev);
+		prev = node1;
+	}
+	
+	for(i = 0; i < node1->level-1; i++)
+	{
+		// do
+		// {
+			
+		// } while(d != true && __sync_bool_compare_and_swap(&node1->next[i],))
+	}
+	
+	prev = COPY_NODE(head);
+	for(i = node1->level-1; i > 0; i--)
+		RemoveNode(node1, &prev, i);
+	RELEASE_NODE(prev);
+	RELEASE_NODE(node1);
+	RELEASE_NODE(node1); /*Delete the node*/
+	//return value;
+}
+
 int main(void)
 {
 	union VLink* value = malloc(sizeof(union VLink));

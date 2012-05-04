@@ -44,8 +44,10 @@ struct Node* COPY_NODE(struct Node* node);
 // zero, the function will recursively call RELEASSE_NDOE on the nodes that this node has owned 
 // pointers to (i.e. the prev pointer), and then it reclaims the node.
 void RELEASE_NODE(struct Node* node);
-struct Node* HelpDelete(struct Node* node, int level);
 struct Node* CreateNode(int level, int key, void* value);
 struct Node* ReadNext(struct Node** node1, int level);
 struct Node* ScanKey(struct Node** node1, int level, int key);
 bool Insert(int key, void* value);
+void RemoveNode(struct Node *node, struct Node **prev, int level);
+struct Node* DeleteMin();
+struct Node* HelpDelete(struct Node* node, int level);

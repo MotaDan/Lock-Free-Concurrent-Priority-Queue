@@ -244,19 +244,25 @@ retry:
 	
 	for(i = 0; i < node1->level-1; i++)
 	{
-		// do
-		// {
-			
-		// } while(d != true && __sync_bool_compare_and_swap(&node1->next[i],))
+		union Link old_link;
+		union Link new_link;
+		 do
+		 {
+			 old_link = node1->next[i];
+			 new_link = old_link;
+			 new_link.d = true;
+			 // Until d = true or CAS
+		 } while((old_link.d != true) && !(__sync_bool_compare_and_swap((long long*)&node1->next[i], (long long*)&old_link, (long long*)&new_link)));
 	}
 	
 	prev = COPY_NODE(head);
 	for(i = node1->level-1; i > 0; i--)
 		RemoveNode(node1, &prev, i);
+	
 	RELEASE_NODE(prev);
 	RELEASE_NODE(node1);
 	RELEASE_NODE(node1); /*Delete the node*/
-	//return value;
+	return (struct Node*)node1->value.p;
 }
 
 int main(void)

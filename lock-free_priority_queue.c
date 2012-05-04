@@ -265,6 +265,45 @@ retry:
 	return (struct Node*)node1->value.p;
 }
 
+struct Node* HelpDelete(struct Node* node, int level)
+{
+	// Local variables (for all functions/procedures)
+	struct Node *node2, *prev;
+	int i;
+	
+	union Link old_link, new_link;
+	new_link.d = true;
+	
+	for(i = level; i < node->level-1; i++)
+	{
+		do
+		{
+			old_link = node->next[i];
+			new_link.p = old_link.p;
+		} while(old_link.d != true && !(__sync_bool_compare_and_swap((long long*)&node->next[i], (long long*)&old_link, (long long*)&new_link)));
+	}
+	
+	prev = node->prev;
+	
+	if(!prev || level >= prev->validLevel)
+	{
+		prev = COPY_NODE(head);
+		
+		for(i = maxLevel-1; i > level; i--)
+		{
+			node2 = ScanKey(&prev, i, node->key);
+			RELEASE_NODE(node2);
+		}
+	}
+	else
+		COPY_NODE(prev);
+	
+	RemoveNode(node, &prev, level);
+	RELEASE_NODE(node);
+	
+	return prev;
+}
+
 int main(void)
 {
 	union VLink* value = malloc(sizeof(union VLink));
@@ -296,9 +335,4 @@ struct Node* COPY_NODE(struct Node* node)
 void RELEASE_NODE(struct Node* node)
 {
 	return;
-}
-
-struct Node* HelpDelete(struct Node* node, int level)
-{
-	return node;
 }

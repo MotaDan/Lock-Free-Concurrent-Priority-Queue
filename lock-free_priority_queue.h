@@ -49,5 +49,5 @@ struct Node* ReadNext(struct Node** node1, int level);
 struct Node* ScanKey(struct Node** node1, int level, int key);
 bool Insert(int key, void* value);
 void RemoveNode(struct Node *node, struct Node **prev, int level);
-struct Node* DeleteMin();
+void* DeleteMin();
 struct Node* HelpDelete(struct Node* node, int level);
